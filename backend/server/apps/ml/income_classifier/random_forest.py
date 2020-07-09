@@ -35,7 +35,7 @@ class RandomForestClassifier:
 
     def postprocessing(self, input_data):
         label = "none"
-        if input_data[1] != 0:
+        if input_data[1] > 0.5:
             label = "completed"
         return {"probability": input_data[1], "label": label, "status": "OK"}
 

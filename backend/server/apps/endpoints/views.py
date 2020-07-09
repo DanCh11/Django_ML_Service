@@ -15,6 +15,15 @@ from apps.endpoints.serializers import MLRequestSerializer
 from django.db import transaction
 from rest_framework.exceptions import APIException
 
+# ======================= # ====================== # ====================
+
+import json
+from numpy.random import rand
+from rest_framework import views, status
+from rest_framework.response import Response
+from apps.ml.registry import MLRegistry
+from server.wsgi import registry
+
 
 class EndpointViewSet(
     mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
@@ -63,3 +72,28 @@ class MLRequestViewSet(
 ):
     serializer_class = MLRequestSerializer
     queryset = MLRequest.objects.all()
+
+
+class PredictView(views.APIView):
+    def post(self, request, endpoint_name, format=None):
+        algorithm_status = self.request.query_params.get(
+            "status", "production")
+        algorithm_version = self.request.query_params.get("version")
+
+        algs = MLAlgorithm.objects.filter(
+            parent_endpoint__name=endpoint_name, status__status=algorithm_status, status__active=True)
+
+        if algorithm_version is not None:
+            algs = algs.filter(version=algorithm_version)
+
+        if len(algs) == 0:
+            return Response(
+                {"status": "Error", "message": "ML algorithm is not available"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if len(algs) != 1 and algorithm_status != "ab_testing":
+            return Response(
+                {"status": "Error", "message": "ML algorithm selection is ambiguous. Please specify algorithm version."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )

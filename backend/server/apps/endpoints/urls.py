@@ -14,5 +14,5 @@ router.register(r"mlalgorithmstatuses", MLAlgorithmStatusViewSet,
 router.register(r"mlrequests", MLRequestViewSet, basename="mlrequests")
 
 urlpatterns = [
-    url(r"^api/v1/", include(router.urls))
+    url(r"^api/v1/", include(router.urls)),
 ]
